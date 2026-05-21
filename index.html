@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OKR Progress Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #FAFAFA;
+            padding: 40px 20px;
+            color: #1F2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            padding: 40px;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #6B7280;
+        }
+
+        .progress-summary {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .summary-item {
+            flex: 1;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2563EB;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            color: #1F2937;
+            cursor: pointer;
+        }
+
+        input {
+            min-width: 200px;
+        }
+
+        select:hover, input:hover {
+            border-color: #9CA3AF;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #F3F4F6;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2563EB;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #6B7280;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #F9FAFB;
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            border-bottom: 2px solid #E5E7EB;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #F3F4F6;
+        }
+
+        th.sortable::after {
+            content: ' ↕';
+            font-size: 10px;
+            opacity: 0.5;
+        }
+
+        th.sorted-asc::after {
+            content: ' ↑';
+            opacity: 1;
+        }
+
+        th.sorted-desc::after {
+            content: ' ↓';
+            opacity: 1;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        tr:hover {
+            background: #F9FAFB;
+        }
+
+        .okr-title {
+            font-weight: 600;
+            color: #1F2937;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-on-track {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-behind {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .progress-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: #E5E7EB;
+            border-radius: 3px;
+            overflow: hidden;
+            min-width: 80px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #2563EB;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-percent {
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 35px;
+            text-align: right;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #E5E7EB;
+            font-size: 12px;
+            color: #9CA3AF;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6B7280;
+        }
+
+        .error {
+            background: #FEE2E2;
+            color: #991B1B;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9CA3AF;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">OKR Progress Dashboard</div>
+            <div class="subtitle">Product Management | 2026 Objectives</div>
+        </div>
+
+        <div class="progress-summary">
+            <div class="summary-item">
+                <div class="summary-label">Overall Progress</div>
+                <div class="summary-value" id="overallProgress">42%</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">On Track</div>
+                <div class="summary-value" id="onTrackCount">4</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Behind</div>
+                <div class="summary-value" id="behindCount">1</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Last Updated</div>
+                <div class="summary-value" id="lastUpdated" style="font-size: 16px;">May 20, 2026</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label class="control-label">Filter by Status:</label>
+                <select id="statusFilter">
+                    <option value="">All</option>
+                    <option value="On Track">On Track</option>
+                    <option value="Behind">Behind</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Search:</label>
+                <input type="text" id="searchInput" placeholder="Search OKR titles...">
+            </div>
+            <div class="control-group">
+                <button onclick="location.reload()" style="padding: 8px 16px; background: #2563EB; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    Refresh Data
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-row" id="statsRow"></div>
+
+        <div class="table-container">
+            <div id="loadingMessage" class="loading">Loading OKR data...</div>
+            <table id="okrTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable('id')">#</th>
+                        <th class="sortable" onclick="sortTable('title')">Objective</th>
+                        <th class="sortable" onclick="sortTable('category')">Category</th>
+                        <th class="sortable" onclick="sortTable('status')">Status</th>
+                        <th class="sortable" onclick="sortTable('progress')">Progress</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <div id="emptyState" class="empty-state" style="display: none;">No OKRs match your filters</div>
+        </div>
+
+        <div class="footer">
+            <div>Dashboard auto-refreshes every 5 minutes • Data pulled from GitHub Gist</div>
+            <div style="margin-top: 10px;">Last sync: <span id="syncTime">Just now</span></div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let currentSort = { column: null, direction: 'asc' };
+        let lastSyncTime = new Date();
+
+        // Configuration - Update this with your Gist URL
+        const DATA_GIST_URL = 'https://gist.githubusercontent.com/SidneyAnderson/959c703b10b327503beeb0171bf51473/raw/okr-data.json';
+
+        async function loadData() {
+            try {
+                document.getElementById('loadingMessage').style.display = 'block';
+                document.getElementById('okrTable').style.display = 'none';
+
+                // For now, use inline data - you'll replace this with the Gist fetch
+                allData = await getDataFromGist();
+
+                lastSyncTime = new Date();
+                updateSyncTime();
+                renderDashboard();
+                setupAutoRefresh();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loadingMessage').innerHTML =
+                    '<div class="error">Error loading OKR data. Please check the data source.</div>';
+            }
+        }
+
+        async function getDataFromGist() {
+            // Fallback inline data - replace with actual Gist fetch once Gist is created
+            return {
+                metadata: {
+                    lastUpdated: "2026-05-20",
+                    owner: "Sid Anderson",
+                    overallProgress: 42
+                },
+                okrs: [
+                    {
+                        id: 1,
+                        title: "Relaunch MedFlex",
+                        category: "Core Product",
+                        status: "Behind",
+                        progress: 30,
+                        notes: "Implementation underway"
+                    },
+                    {
+                        id: 2,
+                        title: "Hardware Innovation - Collaborate with Merck on vaccine chiller",
+                        category: "Hardware Innovation",
+                        status: "On Track",
+                        progress: 10,
+                        notes: "Partnership setup phase"
+                    },
+                    {
+                        id: 3,
+                        title: "Software Innovation - Complete NuboMed PRD",
+                        category: "Software Innovation",
+                        status: "On Track",
+                        progress: 95,
+                        notes: "Final review stage"
+                    },
+                    {
+                        id: 4,
+                        title: "Software Innovation - Launch new Buddy functionality",
+                        category: "Software Innovation",
+                        status: "On Track",
+                        progress: 67,
+                        notes: "Development in progress"
+                    },
+                    {
+                        id: 5,
+                        title: "Hardware Innovation - eDrawer Product Bulletins",
+                        category: "Hardware Innovation",
+                        status: "On Track",
+                        progress: 10,
+                        notes: "Planning phase"
+                    }
+                ]
+            };
+        }
+
+        function renderDashboard() {
+            const filtered = getFilteredData();
+            renderStats(filtered);
+            renderTable(filtered);
+            document.getElementById('loadingMessage').style.display = 'none';
+        }
+
+        function renderStats(data) {
+            const onTrackCount = data.filter(o => o.status === 'On Track').length;
+            const behindCount = data.filter(o => o.status === 'Behind').length;
+
+            document.getElementById('overallProgress').textContent = `${allData[0]?.overallProgress || 42}%`;
+            document.getElementById('onTrackCount').textContent = onTrackCount;
+            document.getElementById('behindCount').textContent = behindCount;
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('okrTable').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('okrTable').style.display = 'table';
+
+            data.forEach(okr => {
+                const row = document.createElement('tr');
+                const statusClass = okr.status === 'On Track' ? 'status-on-track' : 'status-behind';
+
+                row.innerHTML = `
+                    <td>${okr.id}</td>
+                    <td><span class="okr-title">${escapeHtml(okr.title)}</span></td>
+                    <td>${escapeHtml(okr.category)}</td>
+                    <td><span class="status-badge ${statusClass}">${okr.status}</span></td>
+                    <td>
+                        <div class="progress-cell">
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: ${okr.progress}%"></div>
+                            </div>
+                            <div class="progress-percent">${okr.progress}%</div>
+                        </div>
+                    </td>
+                    <td>${escapeHtml(okr.notes)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getFilteredData() {
+            let filtered = allData.okrs || [];
+
+            const statusFilter = document.getElementById('statusFilter').value;
+            if (statusFilter) {
+                filtered = filtered.filter(o => o.status === statusFilter);
+            }
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(o =>
+                    o.title.toLowerCase().includes(searchTerm) ||
+                    o.category.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            return filtered;
+        }
+
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+
+            const data = getFilteredData();
+            data.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+
+                if (currentSort.direction === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+
+            updateSortHeaders();
+            renderTable(data);
+        }
+
+        function updateSortHeaders() {
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+            });
+
+            if (currentSort.column) {
+                document.querySelectorAll('th.sortable').forEach(th => {
+                    if (th.textContent.toLowerCase().includes(currentSort.column)) {
+                        th.classList.add(`sorted-${currentSort.direction}`);
+                    }
+                });
+            }
+        }
+
+        function setupAutoRefresh() {
+            setInterval(() => {
+                loadData();
+            }, 5 * 60 * 1000); // Refresh every 5 minutes
+        }
+
+        function updateSyncTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('syncTime').textContent = `${hours}:${minutes}`;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        document.getElementById('statusFilter').addEventListener('change', renderDashboard);
+        document.getElementById('searchInput').addEventListener('input', renderDashboard);
+
+        // Load data on page load
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>
